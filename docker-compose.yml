@@ -13,5 +13,5 @@ services:
       - /home/kureta/.ssh/known_hosts:/home/developer/.ssh/known_hosts:ro
       - .:/app
     command: >
-      bash -c "python src/dev/main.py;
+      bash -c "python -m dev.main;
       git --version;"

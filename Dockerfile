@@ -9,13 +9,8 @@
 FROM python:3.12-slim AS builder
 
 # Set global environment variables
-ENV PYTHONUNBUFFERED=1 \
-  # python
-  PYTHONDONTWRITEBYTECODE=1 \
-  # pip
-  PIP_DISABLE_PIP_VERSION_CHECK=on \
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  # poetry
   POETRY_VERSION=1.8 \
   POETRY_VIRTUALENVS_IN_PROJECT=true \
   POETRY_NO_INTERACTION=1 \
@@ -67,7 +62,10 @@ COPY --from=dependencies /opt/.venv /opt/.venv
 ENV PATH="/opt/.venv/bin:$PATH"
 COPY . /app
 
-CMD [ "python", "src/dev/main.py" ]
+ENV PYTHONUNBUFFERED=1 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH=/app/src
+CMD [ "python", "-m", "dev.main" ]
 
 # ========================
 # dev-dependencies stage installs all dependencies, including development
@@ -110,4 +108,7 @@ USER developer
 COPY --from=dev-dependencies /opt/.venv /opt/.venv
 ENV PATH="/opt/.venv/bin:$PATH"
 
-CMD [ "python", "src/dev/main.py" ]
+ENV PYTHONUNBUFFERED=1 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH=/app/src
+CMD [ "python", "-m", "dev.main" ]
