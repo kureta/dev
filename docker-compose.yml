@@ -1,0 +1,14 @@
+name: python-development
+services:
+  development:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+      args:
+        USER_ID: 1000
+        GROUP_ID: 1000
+    volumes:
+      - /home/kureta/.ssh/id_ed25519:/home/developer/.ssh/id_ed25519:ro
+      - /home/kureta/.ssh/known_hosts:/home/developer/.ssh/known_hosts:ro
+      - .:/app
