@@ -16,10 +16,9 @@ ENV PYTHONUNBUFFERED=1 \
   POETRY_VIRTUALENVS_CREATE=1 \
   POETRY_CACHE_DIR=/opt/.cache
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-RUN --mount=type=cache,target=/var/cache/apt \
-  --mount=type=cache,target=/var/lib/apt/lists \
+# Install pip
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y --no-install-recommends \
   # deps for installing poetry
   python3-pip=23.*
@@ -71,8 +70,8 @@ RUN --mount=type=cache,target=/opt/.cache \
 
 FROM python:3.12-slim AS development
 
-RUN --mount=type=cache,target=/var/cache/apt \
-  --mount=type=cache,target=/var/lib/apt/lists \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y --no-install-recommends \
   # deps for installing poetry
   git=1:2.39.* \
