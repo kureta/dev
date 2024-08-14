@@ -12,3 +12,6 @@ services:
       - /home/kureta/.ssh/id_ed25519:/home/developer/.ssh/id_ed25519:ro
       - /home/kureta/.ssh/known_hosts:/home/developer/.ssh/known_hosts:ro
       - .:/app
+    command: >
+      bash -c "python src/dev/main.py;
+      git --version;"
