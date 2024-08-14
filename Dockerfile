@@ -1,8 +1,14 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
+# ========================
+# Builder should have dependencies that are independent of the
+# specific project. This includes installing poetry, which is
+# used to manage the project's dependencies.
+# ========================
 FROM python:3.12-slim AS builder
 
+# Set global environment variables
 ENV PYTHONUNBUFFERED=1 \
   # python
   PYTHONDONTWRITEBYTECODE=1 \
@@ -23,9 +29,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   # deps for installing poetry
   python3-pip=23.*
 
+# Don't know why hadolint doesn't like mount cache with pip
+# hadolint ignore=DL3042
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install "poetry==$POETRY_VERSION"
 
+# ========================
+# The dependencies stage installs the project's runtime dependencies.
 # ========================
 
 FROM builder AS dependencies
@@ -35,6 +45,9 @@ COPY pyproject.toml poetry.lock /opt/
 RUN --mount=type=cache,target=/opt/.cache \
   poetry install --no-root --only main
 
+# ========================
+# Runtime stage copies everything necessary to run the applicationfrom
+# from previous stages, and sets up the runtime environment.
 # ========================
 
 FROM python:3.12-slim AS runtime
@@ -57,6 +70,9 @@ COPY . /app
 CMD [ "python", "src/dev/main.py" ]
 
 # ========================
+# dev-dependencies stage installs all dependencies, including development
+# dependencies, such as pre-commit hooks and testing libraries.
+# ========================
 
 FROM builder AS dev-dependencies
 
@@ -66,7 +82,9 @@ RUN --mount=type=cache,target=/opt/.cache \
   poetry install
 
 # ========================
-# TODO: I need a home dir for dotfiles anyway.
+# development stage, copies everything necessary for development from
+# previous stages, and sets up the development environment.
+# ========================
 
 FROM python:3.12-slim AS development
 
