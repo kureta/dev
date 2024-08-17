@@ -69,7 +69,7 @@ CMD [ "python", "-m", "dev.main" ]
 
 # ========================
 # dev-dependencies stage installs all dependencies, including development
-# dependencies, such as pre-commit hooks and testing libraries.
+# dependencies, of the project such as pre-commit hooks and testing libraries.
 # ========================
 
 FROM builder AS dev-dependencies
@@ -91,7 +91,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt-get install -y --no-install-recommends \
   # deps for installing poetry
   git=1:2.39.* \
-  ssh=1:9.*
+  ssh=1:9.* \
+  wget=1.21.* \
+  build-essential=12.* \
+  npm=9.* \
+  unzip=6.*
 
 # Set the UID and GID to match the host user (e.g., UID 1000 and GID 1000)
 ARG USER_ID=1000
@@ -103,8 +107,27 @@ RUN groupadd -g ${GROUP_ID} developer \
   && mkdir -p /app \
   && chown developer:developer /app
 
-WORKDIR /app
 USER developer
+
+# Setup neovim
+WORKDIR /home/developer
+RUN wget -q https://github.com/neovim/neovim-releases/releases/download/v0.10.1/nvim-linux64.tar.gz \
+  && tar xzf nvim-linux64.tar.gz \
+  && mkdir -p /home/developer/.local/bin \
+  && mkdir -p /home/developer/.config/nvim \
+  && mkdir -p /home/developer/.ssh \
+  && ln -s /home/developer/nvim-linux64/bin/nvim /home/developer/.local/bin/nvim \
+  && rm nvim-linux64.tar.gz
+ENV PATH="/home/developer/.local/bin:$PATH"
+
+COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/nvim
+RUN nvim --headless +'Lazy! install' +'qall'
+
+COPY --chown=developer:developer ./install.lua /home/developer/install.lua
+COPY --chown=developer:developer ./install.sh /home/developer/install.sh
+RUN '/home/developer/install.sh'
+
+WORKDIR /app
 COPY --from=dev-dependencies /opt/.venv /opt/.venv
 ENV PATH="/opt/.venv/bin:$PATH"
 
