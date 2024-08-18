@@ -2,5 +2,5 @@
 
 nvim --headless "+luafile install.lua" &
 myPid=$!
-sleep 60
+sleep 90
 kill $myPid
