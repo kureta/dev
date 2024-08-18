@@ -95,7 +95,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   wget=1.21.* \
   build-essential=12.* \
   npm=9.* \
-  unzip=6.*
+  unzip=6.* \
+  zsh=5.*
 
 # Set the UID and GID to match the host user (e.g., UID 1000 and GID 1000)
 ARG USER_ID=1000
@@ -103,7 +104,7 @@ ARG GROUP_ID=1000
 
 # Create a group and a user with specific UID and GID
 RUN groupadd -g ${GROUP_ID} developer \
-  && useradd -ml -u ${USER_ID} -g developer developer \
+  && useradd -ml -s /bin/zsh -u ${USER_ID} -g developer developer \
   && mkdir -p /app \
   && chown developer:developer /app
 
@@ -120,8 +121,9 @@ RUN wget -q https://github.com/neovim/neovim-releases/releases/download/v0.10.1/
   && rm nvim-linux64.tar.gz
 ENV PATH="/home/developer/.local/bin:$PATH"
 
+# Setup neovim
 COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/nvim
-RUN nvim --headless +'Lazy! install' +'qall'
+# RUN nvim --headless +'Lazy! install' +'qall'
 
 COPY --chown=developer:developer ./install.lua /home/developer/install.lua
 RUN nvim --headless -c 'luafile /home/developer/install.lua' -c 'qall'
