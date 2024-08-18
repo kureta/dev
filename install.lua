@@ -28,20 +28,35 @@ local mason_stuff = {}
 
 -- lsp packages installed via nvim-lspconfig
 local servers = nvim_lsp._.cache.opts.servers
--- get only enabled servers
 for server_name, _ in pairs(servers) do
-	-- vim.print(server_name)
 	table.insert(mason_stuff, alias_to_name[server_name])
 end
 
 -- mason apps installed
 local mason_apps = mason._.cache.opts.ensure_installed
 for _, mason_app in pairs(mason_apps) do
-	-- vim.print(mason_app)
 	table.insert(mason_stuff, alias_to_name[mason_app])
+end
+
+local function install_mason_package(package_name)
+	local job_id = vim.fn.jobstart(vim.cmd("MasonInstall " .. package_name), {
+		on_exit = function(_, code)
+			if code == 0 then
+				print("Installed " .. package_name)
+			else
+				print("Failed to install " .. package_name)
+			end
+		end,
+	})
+
+	if job_id > 0 then
+		vim.fn.jobwait({ job_id }, -1)
+	else
+		print("Failed to start job for " .. package_name)
+	end
 end
 
 -- install them one by one
 for _, v in ipairs(mason_stuff) do
-	vim.cmd("MasonInstall " .. v)
+	install_mason_package(v)
 end

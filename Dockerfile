@@ -124,8 +124,7 @@ COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/
 RUN nvim --headless +'Lazy! install' +'qall'
 
 COPY --chown=developer:developer ./install.lua /home/developer/install.lua
-COPY --chown=developer:developer ./install.sh /home/developer/install.sh
-RUN '/home/developer/install.sh'
+RUN nvim --headless -c 'luafile /home/developer/install.lua' -c 'qall'
 
 WORKDIR /app
 COPY --from=dev-dependencies /opt/.venv /opt/.venv
