@@ -92,6 +92,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   # deps for installing poetry
   git=1:2.* \
   ssh=1:9.* \
+  curl=7.* \
+  luarocks=3.* \
   wget=1.* \
   build-essential=12.* \
   npm=9.* \
@@ -115,10 +117,17 @@ RUN groupadd -g ${GROUP_ID} developer \
   && chown developer:developer /app
 
 USER developer
+WORKDIR /home/developer
+
+# install lazygit
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')_Linux_x86_64.tar.gz" \
+  && tar xf lazygit.tar.gz lazygit \
+  && mkdir -p /home/developer/.local/bin \
+  && install lazygit /home/developer/.local/bin
 
 # Install neovim
-WORKDIR /home/developer
-RUN wget -q https://github.com/neovim/neovim-releases/releases/download/v0.10.1/nvim-linux64.tar.gz \
+RUN curl -Lo nvim-linux64.tar.gz https://github.com/neovim/neovim-releases/releases/download/v0.10.1/nvim-linux64.tar.gz \
   && tar xzf nvim-linux64.tar.gz \
   && mv /home/developer/nvim-linux64 /home/developer/.nvim-linux64 \
   && mkdir -p /home/developer/.local/bin \
@@ -144,7 +153,7 @@ COPY --chown=developer:developer ./dotfiles/.zshenv /home/developer/.zshenv
 COPY --chown=developer:developer ./dotfiles/config/zsh /home/developer/.config/zsh
 RUN mkdir /home/developer/.local/share/zsh
 
-# stup starship prompt
+# setup starship prompt
 ADD --chown=developer:developer https://starship.rs/install.sh /tmp/install.sh
 RUN sh /tmp/install.sh  --yes --bin-dir /home/developer/.local/bin \
   && rm /tmp/install.sh
