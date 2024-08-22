@@ -131,8 +131,13 @@ ENV PATH="/home/developer/.local/bin:$PATH"
 # Setup neovim
 COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/nvim
 COPY --chown=developer:developer ./scripts/install.lua /tmp/install.lua
-RUN nvim --headless -c 'luafile /tmp/install.lua' -c 'qall' \
+RUN --mount=type=cache,target=/home/developer/.local/share/nvim,id=nvim-cache,sharing=locked,uid=1000,gid=1000 \
+  nvim --headless -c 'luafile /tmp/install.lua' -c 'qall' \
   && rm /tmp/install.lua
+
+RUN --mount=type=cache,target=/tmp/nvim,id=nvim-cache,sharing=locked,uid=1000,gid=1000 \
+  mkdir -p /home/developer/.local/share/nvim \
+  && cp -r /tmp/nvim/* /home/developer/.local/share/nvim/
 
 # Setup zsh
 COPY --chown=developer:developer ./dotfiles/.zshenv /home/developer/.zshenv
