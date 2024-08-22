@@ -90,13 +90,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y --no-install-recommends \
   # deps for installing poetry
-  git=1:2.39.* \
+  git=1:2.* \
   ssh=1:9.* \
-  wget=1.21.* \
+  wget=1.* \
   build-essential=12.* \
   npm=9.* \
   unzip=6.* \
-  zsh=5.*
+  zsh=5.* \
+  zsh-autosuggestions=0.7.* \
+  zsh-syntax-highlighting=0.7.* \
+  ripgrep=13.* \
+  fd-find=8.* \
+  lsd=0.23.* \
+  trash-cli=0.17.*
 
 # Set the UID and GID to match the host user (e.g., UID 1000 and GID 1000)
 ARG USER_ID=1000
@@ -110,7 +116,7 @@ RUN groupadd -g ${GROUP_ID} developer \
 
 USER developer
 
-# Setup neovim
+# Install neovim
 WORKDIR /home/developer
 RUN wget -q https://github.com/neovim/neovim-releases/releases/download/v0.10.1/nvim-linux64.tar.gz \
   && tar xzf nvim-linux64.tar.gz \
@@ -123,11 +129,19 @@ ENV PATH="/home/developer/.local/bin:$PATH"
 
 # Setup neovim
 COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/nvim
-# RUN nvim --headless +'Lazy! install' +'qall'
-
 COPY --chown=developer:developer ./install.lua /home/developer/install.lua
 RUN nvim --headless -c 'luafile /home/developer/install.lua' -c 'qall'
 
+# Setup zsh
+COPY --chown=developer:developer ./dotfiles/.zshenv /home/developer/.zshenv
+COPY --chown=developer:developer ./dotfiles/config/zsh /home/developer/.config/zsh
+
+# stup starship prompt
+ADD --chown=developer:developer https://starship.rs/install.sh /tmp/install.sh
+RUN sh /tmp/install.sh  --yes --bin-dir /home/developer/.local/bin \
+  && rm /tmp/install.sh
+
+# setup the app
 WORKDIR /app
 COPY --from=dev-dependencies /opt/.venv /opt/.venv
 ENV PATH="/opt/.venv/bin:$PATH"
