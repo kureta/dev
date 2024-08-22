@@ -120,21 +120,24 @@ USER developer
 WORKDIR /home/developer
 RUN wget -q https://github.com/neovim/neovim-releases/releases/download/v0.10.1/nvim-linux64.tar.gz \
   && tar xzf nvim-linux64.tar.gz \
+  && mv /home/developer/nvim-linux64 /home/developer/.nvim-linux64 \
   && mkdir -p /home/developer/.local/bin \
   && mkdir -p /home/developer/.config/nvim \
   && mkdir -p /home/developer/.ssh \
-  && ln -s /home/developer/nvim-linux64/bin/nvim /home/developer/.local/bin/nvim \
+  && ln -s /home/developer/.nvim-linux64/bin/nvim /home/developer/.local/bin/nvim \
   && rm nvim-linux64.tar.gz
 ENV PATH="/home/developer/.local/bin:$PATH"
 
 # Setup neovim
 COPY --chown=developer:developer ./dotfiles/config/nvim /home/developer/.config/nvim
-COPY --chown=developer:developer ./install.lua /home/developer/install.lua
-RUN nvim --headless -c 'luafile /home/developer/install.lua' -c 'qall'
+COPY --chown=developer:developer ./scripts/install.lua /tmp/install.lua
+RUN nvim --headless -c 'luafile /tmp/install.lua' -c 'qall' \
+  && rm /tmp/install.lua
 
 # Setup zsh
 COPY --chown=developer:developer ./dotfiles/.zshenv /home/developer/.zshenv
 COPY --chown=developer:developer ./dotfiles/config/zsh /home/developer/.config/zsh
+RUN mkdir /home/developer/.local/share/zsh
 
 # stup starship prompt
 ADD --chown=developer:developer https://starship.rs/install.sh /tmp/install.sh
