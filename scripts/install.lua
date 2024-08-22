@@ -8,9 +8,18 @@ local lazy = require("lazy.core.config")
 local nvim_lsp = lazy.plugins["nvim-lspconfig"]
 local mason = lazy.plugins["mason.nvim"]
 
--- Stuff below is for converting package aliases to names
 local registry = require("mason-registry")
 
+local function contains(array, element)
+	for _, value in ipairs(array) do
+		if value == element then
+			return true
+		end
+	end
+	return false
+end
+
+-- Stuff below is for converting package aliases to names
 local all_package_names = registry.get_all_package_names()
 local alias_to_name = {}
 
@@ -24,19 +33,30 @@ for _, package_name in pairs(all_package_names) do
 	end
 end
 
+local already_installed = registry.get_installed_package_names()
+for idx, v in ipairs(already_installed) do
+	already_installed[idx] = alias_to_name[v]
+end
+
 -- Load all packages into a list
 local mason_stuff = {}
 
 -- lsp packages installed via nvim-lspconfig
 local servers = nvim_lsp._.cache.opts.servers
 for server_name, _ in pairs(servers) do
-	table.insert(mason_stuff, alias_to_name[server_name])
+	server_name = alias_to_name[server_name]
+	if not contains(already_installed, server_name) then
+		table.insert(mason_stuff, server_name)
+	end
 end
 
 -- mason apps installed
 local mason_apps = mason._.cache.opts.ensure_installed
 for _, mason_app in pairs(mason_apps) do
-	table.insert(mason_stuff, alias_to_name[mason_app])
+	mason_app = alias_to_name[mason_app]
+	if not contains(already_installed, mason_app) then
+		table.insert(mason_stuff, mason_app)
+	end
 end
 
 local function install_mason_package(package_name)
